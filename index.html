@@ -18,69 +18,51 @@
         <script src="jspsych-6.2.0/plugins/jspsych-html-keyboard-response.js"></script>
         <script src="jspsych-6.2.0/plugins/jspsych-survey-html-form.js"></script>
         <link href='jspsych-6.2.0/css/jspsych.css' rel='stylesheet' type="text/css">
-        <script src="https://www.gstatic.com/firebasejs/8.2.7/firebase-app.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.2.7/firebase-auth.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.2.7/firebase-database.js"></script>       
     </head>
     <body></body>
 
-    <script type="text/javascript">
-        // Firebase set up
-        var firebaseConfig = {
-            apiKey: "AIzaSyCCfqbctlvGARj_IPbIOVAXlI5nv7gE-78",
-            authDomain: "scenewheel-simjudge.firebaseapp.com",
-            databaseURL: "https://scenewheel-simjudge-default-rtdb.firebaseio.com",
-            projectId: "scenewheel-simjudge",
-            storageBucket: "scenewheel-simjudge.appspot.com",
-            messagingSenderId: "657235385952",
-            appId: "1:657235385952:web:0d6e1eb7021d80d58f2d05"
-        };
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-    
-        // login anonymous user
-        firebase.auth().signInAnonymously().catch(function(error) {
-            var errorCode = error.code;
-            var errorMessage = error.message;
-        }); 
-    </script>
-
     <script>
         
+        // * data collection endpoint (Google Apps Script web app URL, see apps_script/Code.gs) * //
+        var SAVE_URL = 'https://script.google.com/macros/s/AKfycbx6sS5rXbq8cupwAARrz-Zt4nsFYusFO_nAQ7hk2nekFZF2_bENzn3nL0M7iJUXnq3k/exec';
+
         // * browser info * //        
         var browser = bowser.getParser(window.navigator.userAgent);
         var browser_info = browser.getBrowser();
                
         // * image host * //
-        var img_host = 'https://macklab.dev/resources/sceneWheel/validation_5radii/';
+        var img_host = 'stimuli/';
+        var img_ext = '.jpg';
+        var radii = ['05', '10', '20'];
 
         // * wheel info * //        
         var main_wheel = '01';
-        var prac_wheel = '00';
+        var prac_wheel = '01';
+        var participant_id = Math.random().toString(36).slice(2, 10);
 
         // * condition set up * //       
         var p_cond = [ // pairs covering the entire range of px-correlation
-            {radius:'02', stim_list:[0  ,0  ]},
-            {radius:'02', stim_list:[240,270]},
-            {radius:'04', stim_list:[90 ,120]},
-            {radius:'04', stim_list:[90 ,210]},
-            {radius:'08', stim_list:[60 ,120]},
-            {radius:'08', stim_list:[0  ,300]},
-            {radius:'16', stim_list:[240,270]},
-            {radius:'16', stim_list:[240,330]},
-            {radius:'32', stim_list:[0  ,180]},
-            {radius:'32', stim_list:[90 ,210]}
+            {radius:'05', stim_list:[0  ,0  ]},
+            {radius:'05', stim_list:[240,270]},
+            {radius:'05', stim_list:[0  ,180]},
+            {radius:'10', stim_list:[90 ,120]},
+            {radius:'10', stim_list:[90 ,210]},
+            {radius:'10', stim_list:[0  ,300]},
+            {radius:'20', stim_list:[60 ,120]},
+            {radius:'20', stim_list:[240,330]},
+            {radius:'20', stim_list:[0  ,180]},
+            {radius:'20', stim_list:[90 ,210]}
         ];        
         var left_item = _.shuffle(Array(Math.floor(p_cond.length/2)).fill(0).concat(Array(Math.ceil(p_cond.length/2)).fill(1)));
         for (var i=0; i<p_cond.length; i++){            
             p_cond[i].left_item_idx = left_item[i];            
             p_cond[i].stim_path_left = [
                 img_host+'Wheel'+prac_wheel+'/wheel'+prac_wheel+'_r'+p_cond[i].radius+'/'+
-                ("00000"+p_cond[i].stim_list[left_item[i]]).slice(-6)+'.webp'
+                ("00000"+p_cond[i].stim_list[left_item[i]]).slice(-6)+img_ext
             ];
             p_cond[i].stim_path_right = [
                 img_host+'Wheel'+prac_wheel+'/wheel'+prac_wheel+'_r'+p_cond[i].radius+'/'+
-                ("00000"+p_cond[i].stim_list[(left_item[i]+1)%2]).slice(-6)+'.webp'
+                ("00000"+p_cond[i].stim_list[(left_item[i]+1)%2]).slice(-6)+img_ext
             ];
         };
         // -- main condition -- //
@@ -95,7 +77,7 @@
             }
         };
         var e_factors = {
-            radius: ['02', '04', '08', '16', '32'],                 
+            radius: radii,                 
             stim_list: pair
         };
         var e_cond = factorial_noRandom(e_factors);        
@@ -106,16 +88,22 @@
             e_cond[i].left_item_idx = left_item[i];
             e_cond[i].stim_path_left = [
                 img_host+'Wheel'+main_wheel+'/wheel'+main_wheel+'_r'+e_cond[i].radius+'/'+
-                ("00000"+e_cond[i].stim_list[left_item[i]]).slice(-6)+'.webp'
+                ("00000"+e_cond[i].stim_list[left_item[i]]).slice(-6)+img_ext
             ];
             e_cond[i].stim_path_right = [
                 img_host+'Wheel'+main_wheel+'/wheel'+main_wheel+'_r'+e_cond[i].radius+'/'+
-                ("00000"+e_cond[i].stim_list[(left_item[i]+1)%2]).slice(-6)+'.webp'
+                ("00000"+e_cond[i].stim_list[(left_item[i]+1)%2]).slice(-6)+img_ext
             ];
         };
-        // divide into 5 blocks
-        var n_block = 5;
+        // divide into 4 blocks (204 trials / 4 = 51 each)
+        var n_block = 4;
         var e_cond = _.chunk(_.shuffle(e_cond), e_cond.length/n_block);
+
+        // TEMPORARY test mode: open index.html?test to run 3 practice + 3 trials per block (remove before real launch)
+        if (new URLSearchParams(window.location.search).has('test')) {
+            p_cond = p_cond.slice(0, 3);
+            e_cond = e_cond.map(function(b){ return b.slice(0, 3); });
+        }
         
         // * preload images *//        
         var stimuli = [];
@@ -213,25 +201,14 @@
                 disp_type: 'likert_display',                
                 radius: jsPsych.timelineVariable('radius'),
                 pair: jsPsych.timelineVariable('stim_list'),                                   
+                left_item_idx: jsPsych.timelineVariable('left_item_idx'),
+                stim_path_left: jsPsych.timelineVariable('stim_path_left'),
+                stim_path_right: jsPsych.timelineVariable('stim_path_right'),
             },
             on_finish: function() {
                 // progress bar
                 var curr_progress_bar_value = jsPsych.getProgressBarCompleted();
                 jsPsych.setProgressBar(curr_progress_bar_value + (1/n_trials));
-                // data saving
-                var curr_data = jsPsych.data.get()
-                // send data to savejs
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST','https://macklab-savejs.netlify.app/api/savejs');
-                xhr.setRequestHeader('Content-Type','application/json');
-                xhr.onload = function(){
-                  if(xhr.status==200){
-                    var response=JSON.parse(xhr.responseText);
-                    console.log(response.success);
-                  }
-                };
-                xhr.send(JSON.stringify(curr_data));
-
             }
         }
         var judgment_prac = {
@@ -259,11 +236,6 @@
             timeline_variables: e_cond[3],
             randomize_order: true
         }
-        var judgment_main4 = {
-            timeline: [pair_judge],
-            timeline_variables: e_cond[4],
-            randomize_order: true
-        }
 
         // * save data * //
         var save_data = {
@@ -274,39 +246,25 @@
             on_finish: function(){              
                 // get data values
                 var data = {experiment:"sceneWheel_similarityJudgment",
-                            repo:"sceneWheel_similarityJudgment",
+                            participant_id: participant_id,
                             wheel_info:[main_wheel, prac_wheel],
                             data:jsPsych.data.get().values(),
                             browser_info:browser_info,
                             interaction_data:jsPsych.data.getInteractionData().values(),
-                            exp_condition:e_cond}
+                            exp_condition:e_cond,
+                            date: Date()};
 
-                // send data to savejs
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST','https://macklab-savejs.netlify.app/api/savejs');
-                xhr.setRequestHeader('Content-Type','application/json');
-                xhr.onload = function(){
-                  if(xhr.status==200){
-                    var response=JSON.parse(xhr.responseText);
-                    console.log(response.success);
-                  }
+                var download_backup = function(){
+                    jsPsych.data.get().localSave('csv', 'sceneWheel_'+participant_id+'.csv');
                 };
-                xhr.send(JSON.stringify(data)); 
-
-                // send data to firebase                      
-                var tmp = new Uint32Array(1);
-                tmp = window.crypto.getRandomValues(tmp)
-                var dbpath = firebase.auth().currentUser.uid+'/'+tmp;
-                firebase.database().ref(dbpath).set({
-                    data: [
-                        browser_info,
-                        e_cond,
-                        jsPsych.data.get().values(), 
-                        jsPsych.data.getInteractionData().values()
-                        ],
-                    study: 'sceneWheel_similarityJudgment',
-                    date: Date()
-                });
+                if (!SAVE_URL) { download_backup(); return; }
+                // text/plain keeps this a "simple" request, which Apps Script accepts without CORS preflight
+                fetch(SAVE_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                    body: JSON.stringify(data)
+                }).catch(function(){ download_backup(); });
             }           
         }
 
@@ -370,40 +328,19 @@
 
         // * timeline fill up * //  
         timeline = [];
-        // timeline.push(consent_inst);
-        // timeline.push(consent_page);
-        // timeline.push(instruction1);        
-        // timeline.push(judgment_prac);
-        // timeline.push(instruction2);
-        // for (b=0; b<n_block-1; b++) {          
-        //     timeline.push(eval('judgment_main'+(b)));
-        //     timeline.push(test_break);
-        // }
-        // timeline.push(eval('judgment_main'+(n_block-1)));        
+        timeline.push(instruction1);        
+        timeline.push(judgment_prac);
+        timeline.push(instruction2);
+        for (b=0; b<n_block-1; b++) {          
+            timeline.push(eval('judgment_main'+(b)));
+            timeline.push(test_break);
+        }
+        timeline.push(eval('judgment_main'+(n_block-1)));        
         timeline.push(dem_info);
         timeline.push(save_data);
         timeline.push(debrief_page);
-        
-        // * for non-webp browsers * //
-        var webp = Modernizr.webp;       
-        if(!webp){
-            var webp_warning = {
-                type: 'html-keyboard-response',
-                stimulus: '<p style="color: black; font-size: 20px;">'
-                    +'Your browser does not support the webp image format,<br> '
-                    +'which means that you will not be able to complete the experiment.<br>'
-                    +'Browsers that support the webp include '
-                    +'Chrome, Firefox, IE, Edge, etc (not Safari).',
-                choices: jsPsych.NO_KEYS,
-                trial_duration: 10000,
-                data: {disp_type: 'webp_warning'}
-            }
-            var timeline = [webp_warning];
-            var preload_images = ['stimuli/Wheel01/wheel01_r02/000000.webp']; // randomly load            
-        }
        
         jsPsych.init({
-            // exclusions: { webp: true },             
             timeline: timeline,           
             preload_images: stimuli,  
             show_progress_bar: true, 
