@@ -4,7 +4,7 @@ jsPsych experiment: participants rate the similarity (0-5) of pairs of scenes fr
 Open `index.html` through a web server (GitHub Pages or `python -m http.server`).
 
 ## Stimuli
-`stimuli/Wheel01/wheel01_rXX/NNNNNN.jpg`: 12 frames (0, 30, ... 330) per radius (`05`=0.5x, `10`=1x, `20`=2x),
+`stimuli/Wheel01/wheel01_rXX/NNNNNN.jpg`: 24 frames per radius (`05`=0.5x, `10`=1x, `20`=2x): the 0-offset set (0, 30, ... 330) and the 15-offset set (15, 45, ... 345),
 sampled from the full 360-frame renders (kept locally in `stimuli/Wheel_DiningRoom/`, git-ignored).
 
 ## Data collection

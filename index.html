@@ -66,16 +66,19 @@
             ];
         };
         // -- main condition -- //
-        var pair = []; // prepare all possible pairs
-        var img_num = _.range(0,360,30);
-        var identical_pair = _.sample(img_num,2); // catch trials
-        pair.push([identical_pair[0],identical_pair[0]]);
-        pair.push([identical_pair[1],identical_pair[1]]);        
-        for (var i = 0; i < img_num.length - 1; i++) {            
-            for (var j = i + 1; j < img_num.length; j++) {
-                pair.push([img_num[i], img_num[j]]);
+        // all pairs within the 0-offset set (0,30,...330) and within the 15-offset set (15,45,...345)
+        var pair = [];
+        [0, 15].forEach(function(offset){
+            var img_num = _.range(offset, 360, 30);
+            var identical_pair = _.sample(img_num,2); // catch trials
+            pair.push([identical_pair[0],identical_pair[0]]);
+            pair.push([identical_pair[1],identical_pair[1]]);
+            for (var i = 0; i < img_num.length - 1; i++) {
+                for (var j = i + 1; j < img_num.length; j++) {
+                    pair.push([img_num[i], img_num[j]]);
+                }
             }
-        };
+        });
         var e_factors = {
             radius: radii,                 
             stim_list: pair
@@ -95,8 +98,8 @@
                 ("00000"+e_cond[i].stim_list[(left_item[i]+1)%2]).slice(-6)+img_ext
             ];
         };
-        // divide into 4 blocks (204 trials / 4 = 51 each)
-        var n_block = 4;
+        // divide into 6 blocks (408 trials / 6 = 68 each)
+        var n_block = 6;
         var e_cond = _.chunk(_.shuffle(e_cond), e_cond.length/n_block);
 
         // TEMPORARY test mode: open index.html?test to run 3 practice + 3 trials per block (remove before real launch)
@@ -216,26 +219,13 @@
             timeline_variables: p_cond,
             randomize_order: true
         }
-        var judgment_main0 = {
-            timeline: [pair_judge],
-            timeline_variables: e_cond[0],
-            randomize_order: true
-        }
-        var judgment_main1 = {
-            timeline: [pair_judge],
-            timeline_variables: e_cond[1],
-            randomize_order: true
-        }
-        var judgment_main2 = {
-            timeline: [pair_judge],
-            timeline_variables: e_cond[2],
-            randomize_order: true
-        }
-        var judgment_main3 = {
-            timeline: [pair_judge],
-            timeline_variables: e_cond[3],
-            randomize_order: true
-        }
+        var judgment_main = e_cond.map(function(block){
+            return {
+                timeline: [pair_judge],
+                timeline_variables: block,
+                randomize_order: true
+            };
+        });
 
         // * save data * //
         var save_data = {
@@ -332,10 +322,10 @@
         timeline.push(judgment_prac);
         timeline.push(instruction2);
         for (b=0; b<n_block-1; b++) {          
-            timeline.push(eval('judgment_main'+(b)));
+            timeline.push(judgment_main[b]);
             timeline.push(test_break);
         }
-        timeline.push(eval('judgment_main'+(n_block-1)));        
+        timeline.push(judgment_main[n_block-1]);        
         timeline.push(dem_info);
         timeline.push(save_data);
         timeline.push(debrief_page);
