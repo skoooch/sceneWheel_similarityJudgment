@@ -98,8 +98,9 @@
                 ("00000"+e_cond[i].stim_list[(left_item[i]+1)%2]).slice(-6)+img_ext
             ];
         };
-        // divide into 6 blocks (408 trials / 6 = 68 each)
-        var n_block = 6;
+        // randomly keep half of all trials per participant, then divide into 4 blocks (204 trials / 4 = 51 each)
+        e_cond = _.sample(e_cond, e_cond.length/2);
+        var n_block = 4;
         var e_cond = _.chunk(_.shuffle(e_cond), e_cond.length/n_block);
 
         // TEMPORARY test mode: open index.html?test to run 3 practice + 3 trials per block (remove before real launch)
